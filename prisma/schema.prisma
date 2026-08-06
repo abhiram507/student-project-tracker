@@ -1,0 +1,133 @@
+// Student Project Tracker — data model.
+//
+// Design notes (rationale lives in docs/DECISIONS.md):
+//  * Progress is DERIVED from task counts, never stored. A stored percentage
+//    is a denormalisation that silently drifts the moment a task is deleted.
+//  * Review state lives on Project as an explicit state machine rather than a
+//    loose boolean pair, so illegal states are unrepresentable.
+//  * Every foreign key that models ownership cascades; every foreign key that
+//    models authorship restricts, so we cannot lose a mentor's review history
+//    by deleting the account that wrote it.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  MENTOR
+  ADMIN
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  BLOCKED
+  COMPLETED
+  ARCHIVED
+}
+
+enum ReviewState {
+  DRAFT
+  SUBMITTED
+  CHANGES_REQUESTED
+  APPROVED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ReviewDecision {
+  COMMENT
+  CHANGES_REQUESTED
+  APPROVED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(STUDENT)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  projects Project[] @relation("ProjectOwner")
+  reviews  Review[]  @relation("ReviewAuthor")
+
+  @@index([role])
+  @@map("users")
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  title       String
+  description String        @default("")
+  githubUrl   String?
+  liveUrl     String?
+  status      ProjectStatus @default(PLANNING)
+  reviewState ReviewState   @default(DRAFT)
+  submittedAt DateTime?
+  ownerId     String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  owner   User     @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  tasks   Task[]
+  reviews Review[]
+
+  // Supports the dashboard's "my projects, newest first" and the mentor
+  // queue's "everything awaiting review" without a sequential scan.
+  @@index([ownerId, createdAt])
+  @@index([reviewState, submittedAt])
+  @@index([status])
+  @@map("projects")
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String     @default("")
+  status      TaskStatus @default(TODO)
+  priority    Priority   @default(MEDIUM)
+  dueDate     DateTime?
+  projectId   String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, status])
+  @@index([projectId, createdAt])
+  @@map("tasks")
+}
+
+model Review {
+  id        String         @id @default(cuid())
+  body      String
+  decision  ReviewDecision @default(COMMENT)
+  projectId String
+  authorId  String
+  createdAt DateTime       @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  User    @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([projectId, createdAt])
+  @@index([authorId])
+  @@map("reviews")
+}
