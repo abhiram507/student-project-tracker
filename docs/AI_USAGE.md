@@ -66,17 +66,17 @@ The rest is on me:
 
 <!-- EDIT THIS SECTION. Only keep lines that are true of what YOU did. -->
 
-- [x ] Read every file in `src/` and `tests/` end to end.
-- [x ] Ran the app locally against Postgres and exercised every feature by hand.
-- [x  ] Signed in as two different students and confirmed neither can see the
+- [ ] Read every file in `src/` and `tests/` end to end.
+- [ ] Ran the app locally against Postgres and exercised every feature by hand.
+- [ ] Signed in as two different students and confirmed neither can see the
       other's projects — including by calling the API directly with a copied
       project ID, not just by clicking around the UI.
-- [x ] Confirmed a mentor can review but cannot edit a student's project.
-- [x ] Confirmed `npm run lint`, `npm run typecheck`, `npm test` and
+- [ ] Confirmed a mentor can review but cannot edit a student's project.
+- [ ] Confirmed `npm run lint`, `npm run typecheck`, `npm test` and
       `npm run build` all pass on a clean clone.
-- [x ] Checked the hand-written migration matches the schema
+- [ ] Checked the hand-written migration matches the schema
       (`npx prisma migrate status` reports no drift).
-- [x ] Reviewed the test suite for tests that assert nothing meaningful.
+- [ ] Reviewed the test suite for tests that assert nothing meaningful.
 
 ## Known gaps I can speak to
 
